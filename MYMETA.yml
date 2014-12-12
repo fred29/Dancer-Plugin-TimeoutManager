@@ -1,5 +1,5 @@
 ---
-abstract: 'Perl extension for blah blah blah'
+abstract: 'Perl extension for Dancer'
 author:
   - 'Frederic Lechauve <flechau-@(none)>'
 build_requires:

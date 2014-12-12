@@ -124,16 +124,19 @@
 .\" ========================================================================
 .\"
 .IX Title "Dancer::Plugin::TimeoutManager 3"
-.TH Dancer::Plugin::TimeoutManager 3 "2014-12-11" "perl v5.12.2" "User Contributed Perl Documentation"
+.TH Dancer::Plugin::TimeoutManager 3 "2014-12-12" "perl v5.12.2" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-Dancer::Plugin::TimeoutManager \- Perl extension for blah blah blah
-.SH "SYNOPSIS"
-.IX Header "SYNOPSIS"
+Dancer::Plugin::TimeoutManager \- Dancer plugin to set a timeout to a Dancer request
+.SH "SYNOPSIS package MyDancerApp;"
+.IX Header "SYNOPSIS package MyDancerApp;"
 .Vb 2
+\&  use strict;
+\&  use warnings;
+\&
 \&  use Dancer::Plugin::TimeoutManager;
 \&  blah blah blah
 .Ve
@@ -159,7 +162,7 @@ If you have a mailing list set up for your module, mention it here.
 If you have a web site set up for your module, mention it here.
 .SH "AUTHOR"
 .IX Header "AUTHOR"
-Frederic Lechauve, <flechau\-@(none)>
+Frederic Lechauve, <frederic_lechauve at yahoo.fr>
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
 Copyright (C) 2014 by Frederic Lechauve

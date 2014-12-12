@@ -8,24 +8,40 @@ use Dancer ':syntax';
 use Dancer::Exception ':all';
 use Dancer::Plugin;
 use Data::Dumper;
+use Carp 'croak';
+use List::MoreUtils qw( none);
 
 our $VERSION = '0.01';
 
 register 'timeout' => \&timeout;
 
-sub timeout {
-    my ($pattern, @rest) = @_;
-    print Dumper($pattern);
-    print Dumper(@rest);
+register_exception ('NoTimeout',
+        message_pattern => "timeout must be defined and > 0 and is %s",
+        );
+register_exception ('InvalidMethod',
+        message_pattern => "method must be one in get, put, post, delete and %s is used as a method",
+        );
 
+my @authorized_methods = ('get', 'post', 'put', 'delete');
+
+sub timeout {
+    #my ($timeout, $method, $path, $code) = @_;
+    my ($timeout,$method,$pattern, @rest) = @_;
     my $code;
     for my $e (@rest) { $code = $e if (ref($e) eq 'CODE') }
-
-    my $timeout = 1;
+    
+    #if no timeout an exception is done
+    raise NoTimeout  => $timeout if (!defined $timeout || $timeout <= 0);
+    #if method is not valid an exception is done
+    if ( none { $_ eq lc($method) } @authorized_methods ){
+        raise InvalidMethod => $method;
+    }
+    
     my $timeout_route = sub {
+   
         my $response;
         eval {
-            local $SIG{ALRM} = sub { croak "Route Timeout Detected" };
+            local $SIG{ALRM} = sub { croak ("Route Timeout Detected"); };
             alarm($timeout);
             $response = $code->();
             alarm(0);
@@ -34,16 +50,30 @@ sub timeout {
 
         # Timeout detected
         if ($@ && $@ =~ /Route Timeout Detected/){
-            Dancer::SharedData->response->status(408);
-            return "test";
+            status(408);
+            return "Request Timeout (more than $timeout seconds)";
         }
         # Preserve exceptions caught during route call
         croak $@ if $@;
 
+        # else everything is allright
         return $response;
     };
-    
-    any ['get'] => $pattern, @rest;
+
+
+    my @compiled_rest;
+    for my $e (@rest) {
+        if (ref($e) eq 'CODE') {
+            push @compiled_rest, $timeout_route;
+        }
+        else {
+            push @compiled_rest, $e;
+        }
+    }
+
+    # declare the route in Dancer's registry
+    any [$method] => $pattern, @compiled_rest;
+    #any( [$method->method], $method->pattern, $timeout_route );
 }
 
 register_plugin;
@@ -55,9 +85,13 @@ __END__
 
 =head1 NAME
 
-Dancer::Plugin::TimeoutManager - Perl extension for Dancer
+Dancer::Plugin::TimeoutManager - Dancer plugin to set a timeout to a Dancer request
 
 =head1 SYNOPSIS
+  package MyDancerApp;
+
+  use strict;
+  use warnings;
 
   use Dancer::Plugin::TimeoutManager;
   blah blah blah
@@ -89,7 +123,7 @@ If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
-Frederic Lechauve, E<lt>frederic@weborama.comE<gt>
+Frederic Lechauve, E<lt>frederic_lechauve at yahoo.frE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
