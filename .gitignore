@@ -1,0 +1,3 @@
+.build
+*.sw?
+Dancer-Plugin-TimeoutManager-*

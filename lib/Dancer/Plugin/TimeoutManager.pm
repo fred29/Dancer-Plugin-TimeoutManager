@@ -3,6 +3,7 @@ package Dancer::Plugin::TimeoutManager;
 use 5.012002;
 use strict;
 use warnings;
+# VERSION
 
 use Dancer ':syntax';
 use Dancer::Exception ':all';
@@ -10,8 +11,6 @@ use Dancer::Plugin;
 use Data::Dumper;
 use Carp 'croak';
 use List::MoreUtils qw( none);
-
-our $VERSION = '0.01';
 
 register 'timeout' => \&timeout;
 
