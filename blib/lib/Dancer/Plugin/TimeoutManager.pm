@@ -4,31 +4,50 @@ use 5.012002;
 use strict;
 use warnings;
 
-require Exporter;
-
-our @ISA = qw(Exporter);
-
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use Dancer::Plugin::TimeoutManager ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-our @EXPORT = qw(
-	
-);
+use Dancer ':syntax';
+use Dancer::Exception ':all';
+use Dancer::Plugin;
+use Data::Dumper;
 
 our $VERSION = '0.01';
 
+register 'timeout' => \&timeout;
 
-# Preloaded methods go here.
+sub timeout {
+    my ($pattern, @rest) = @_;
+    print Dumper($pattern);
+    print Dumper(@rest);
+
+    my $code;
+    for my $e (@rest) { $code = $e if (ref($e) eq 'CODE') }
+
+    my $timeout = 1;
+    my $timeout_route = sub {
+        my $response;
+        eval {
+            local $SIG{ALRM} = sub { croak "Route Timeout Detected" };
+            alarm($timeout);
+            $response = $code->();
+            alarm(0);
+        };
+        alarm(0);
+
+        # Timeout detected
+        if ($@ && $@ =~ /Route Timeout Detected/){
+            Dancer::SharedData->response->status(408);
+            return "test";
+        }
+        # Preserve exceptions caught during route call
+        croak $@ if $@;
+
+        return $response;
+    };
+    
+    any ['get'] => $pattern, @rest;
+}
+
+register_plugin;
+
 
 1;
 __END__
@@ -36,7 +55,7 @@ __END__
 
 =head1 NAME
 
-Dancer::Plugin::TimeoutManager - Perl extension for blah blah blah
+Dancer::Plugin::TimeoutManager - Perl extension for Dancer
 
 =head1 SYNOPSIS
 
@@ -70,7 +89,7 @@ If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
-Frederic Lechauve, E<lt>flechau-@(none)E<gt>
+Frederic Lechauve, E<lt>frederic@weborama.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
