@@ -6,7 +6,7 @@ use Test::More;
 use Dancer::Test;
 
 {
-use Dancer ;
+    use Dancer;
     use Dancer::Plugin::TimeoutManager;
     setting show_errors => 1;
 
@@ -20,10 +20,11 @@ use Dancer ;
         return "ok";
     };
    
-    timeout 1, 'put' => '/timeout0' => sub {
+    timeout 0, 'get' => '/timeout0' => sub {
         sleep 1;
         return "ok";
     };
+    
 
 }
 
@@ -38,6 +39,12 @@ response_content_like [GET => '/fail'],
     qr{Request Timeout.*2 seconds}, 
     "content looks good for /fail";
 
+response_status_is [GET => '/timeout0'], 200, 
+  "GET /success works (no timeout triggered)";
+response_content_is [GET => '/timeout0'], 'ok', 
+    "content looks good for /timeout0";
+
+
 {
     use Dancer ;
     use Dancer::Plugin::TimeoutManager;
@@ -51,26 +58,9 @@ response_content_like [GET => '/fail'],
     };
     is $@, "method must be one in get, put, post, delete and putt is used as a method", "Exception is correctly detected on method"; 
 
-    eval{
-        timeout 0, 'put' => '/timeout0' => sub {
-            sleep 1;
-            return "ok";
-        };
-    };
-    is $@, "timeout must be defined and > 0 and is 0", "Exception is correctly detected on timeout value"; 
-
 }
 
 
-
-=pod
-response_status_is [GET => '/timeout0'], 500, 
-  "GET /timeout0 works (timeout triggered)";
-
-response_content_like [GET => '/timeout0'], 
-    qr{Timeout must be defined}, 
-    "content looks good for /timeout0";
-=cut
 done_testing;
 1;
 

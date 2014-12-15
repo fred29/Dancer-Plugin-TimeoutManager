@@ -29,7 +29,7 @@ sub timeout {
     for my $e (@rest) { $code = $e if (ref($e) eq 'CODE') }
     
     #if no timeout an exception is done
-    raise NoTimeout  => $timeout if (!defined $timeout || $timeout <= 0);
+    raise NoTimeout  => $timeout if (!defined $timeout);
     #if method is not valid an exception is done
     if ( none { $_ eq lc($method) } @authorized_methods ){
         raise InvalidMethod => $method;
@@ -38,18 +38,26 @@ sub timeout {
     my $timeout_route = sub {
    
         my $response;
-        eval {
-            local $SIG{ALRM} = sub { croak ("Route Timeout Detected"); };
-            alarm($timeout);
+        # if timeout equal 0 the timeout manager is not used
+        if ($timeout == 0){
             $response = $code->();
+        }
+        else{
+            eval {
+                local $SIG{ALRM} = sub { croak ("Route Timeout Detected"); };
+                alarm($timeout);
+                $response = $code->();
+                alarm(0);
+            };
             alarm(0);
-        };
-        alarm(0);
-
+        }
         # Timeout detected
         if ($@ && $@ =~ /Route Timeout Detected/){
-            status(408);
-            return "Request Timeout (more than $timeout seconds)";
+            my $response_with_timeout = Dancer::Response->new(
+                    status => 408,
+                    content => "Request Timeout : more than $timeout seconds"
+                    );
+            return $response_with_timeout;
         }
         # Preserve exceptions caught during route call
         croak $@ if $@;
