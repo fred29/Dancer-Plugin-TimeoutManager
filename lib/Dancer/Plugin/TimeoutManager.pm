@@ -99,32 +99,18 @@ Dancer::Plugin::TimeoutManager - Dancer plugin to set a timeout to a Dancer requ
   use warnings;
 
   use Dancer::Plugin::TimeoutManager;
-  blah blah blah
+  
+  timeout 1, 'get' => '/method' => sub{
+    my $code;
+  };
+ 
 
 =head1 DESCRIPTION
 
-Stub documentation for Dancer::Plugin::TimeoutManager, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
+The goal of this plugin is to manage a timeout to Dancer. 
+If the timeout is set to 0, the behavior is the same than without timeout
+If a timeout is set, when this one is outdated a response with status 408 is sent
 
-Blah blah blah.
-
-=head2 EXPORT
-
-None by default.
-
-
-
-=head1 SEE ALSO
-
-Mention other useful documentation such as the documentation of
-related modules or operating system documentation (such as man pages
-in UNIX), or any relevant external documentation such as RFCs or
-standards.
-
-If you have a mailing list set up for your module, mention it here.
-
-If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
