@@ -12,34 +12,52 @@ use Data::Dumper;
 use Carp 'croak';
 use List::MoreUtils qw( none);
 
+
+#get the timeout from headers
+hook(before => sub { 
+    var header_timeout => request->header('X-Dancer-Timeout');
+});
+
 register 'timeout' => \&timeout;
 
-register_exception ('NoTimeout',
-        message_pattern => "timeout must be defined and > 0 and is %s",
+register_exception ('InvalidArgumentNumber',
+        message_pattern => "the number of arguments must 3 or 4, you've got %s",
         );
 register_exception ('InvalidMethod',
         message_pattern => "method must be one in get, put, post, delete and %s is used as a method",
         );
 
+
 my @authorized_methods = ('get', 'post', 'put', 'delete');
 
 sub timeout {
-    my ($timeout,$method,$pattern, @rest) = @_;
+    my ($timeout,$method, $pattern, @rest);
+    if (scalar(@_) == 4){
+        ($timeout,$method, $pattern, @rest) = @_;
+    }
+    elsif(scalar(@_) == 3){
+        ($method, $pattern, @rest) = @_;
+    }
+    else{
+         raise InvalidMethod => scalar(@_);
+    }
     my $code;
     for my $e (@rest) { $code = $e if (ref($e) eq 'CODE') }
-    
-    #if no timeout an exception is done
-    raise NoTimeout  => $timeout if (!defined $timeout);
+    my $request;
+
     #if method is not valid an exception is done
     if ( none { $_ eq lc($method) } @authorized_methods ){
         raise InvalidMethod => $method;
     }
     
     my $timeout_route = sub {
-   
         my $response;
-        # if timeout equal 0 the timeout manager is not used
-        if ($timeout == 0){
+
+        #if timeout is not defined but a value is set in the headers for timeout
+        $timeout = vars->{header_timeout} if (!defined $timeout && defined vars->{header_timeout});
+
+        # if timeout is not defined or equal 0 the timeout manager is not used
+        if (!$timeout){
             $response = $code->();
         }
         else{
@@ -103,6 +121,12 @@ Dancer::Plugin::TimeoutManager - Dancer plugin to set a timeout to a Dancer requ
   timeout 1, 'get' => '/method' => sub{
     my $code;
   };
+
+  #if header X-Dancer-Timeout is set, the header's value is used as timeout
+  timeout 'get' => '/method' => sub{
+    my $code;
+  };
+
  
 
 =head1 DESCRIPTION
@@ -110,6 +134,7 @@ Dancer::Plugin::TimeoutManager - Dancer plugin to set a timeout to a Dancer requ
 The goal of this plugin is to manage a timeout to Dancer. 
 If the timeout is set to 0, the behavior is the same than without timeout
 If a timeout is set, when this one is outdated a response with status 408 is sent
+If timeout is not set, you can also use X-Dancer-Timeout header to set a value to the timeout
 
 
 =head1 AUTHOR

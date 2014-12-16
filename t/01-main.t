@@ -24,7 +24,21 @@ use Dancer::Test;
         sleep 1;
         return "ok";
     };
-    
+
+    timeout undef, 'get' => '/timeoutundef' => sub {
+        sleep 3;
+        return "ok";
+    };
+
+    timeout 'get' => '/timeoutnotset' => sub {
+        sleep 3;
+        return "ok";
+    };
+
+    timeout 'get' => '/timeoutnotsetandnoheader' => sub {
+        sleep 3;
+        return "ok";
+    };
 
 }
 
@@ -45,6 +59,25 @@ response_content_is [GET => '/timeout0'], 'ok',
     "content looks good for /timeout0";
 
 
+response_status_is [GET => '/timeoutundef'], 200, 
+  "GET /timeoutundef works (timeout not triggered)";
+response_status_is [GET => '/timeoutundef',{headers => ['X-Dancer-Timeout' => '2']}], 408, 
+  "GET /timeoutundef works (timeout triggered) the header is correctly get";
+response_content_like [GET => '/timeoutundef',{headers => ['X-Dancer-Timeout' => '2']}], 
+    qr{Request Timeout.*2 seconds}, 
+    "content looks good for /timeoutundef";
+
+
+response_status_is [GET => '/timeoutnotset',{headers => ['X-Dancer-Timeout' => '1']}], 408, 
+  "GET /timeoutnotset works (timeout triggered) timeout is not set but it is correctly get from headers";
+response_content_like [GET => '/timeoutnotset',{headers => ['X-Dancer-Timeout' => '1']}], 
+    qr{Request Timeout.*1 seconds}, 
+    "content looks good for /timeoutnotset";
+
+response_status_is [GET => '/timeoutnotsetandnoheader'], 200, 
+  "GET /timeoutnotsetandnoheader works like a classic route";
+response_content_is [GET => '/timeoutnotsetandnoheader'], 'ok', "content looks good for /timeoutnotsetandnoheader";
+
 {
     use Dancer ;
     use Dancer::Plugin::TimeoutManager;
@@ -57,9 +90,7 @@ response_content_is [GET => '/timeout0'], 'ok',
         };
     };
     is $@, "method must be one in get, put, post, delete and putt is used as a method", "Exception is correctly detected on method"; 
-
 }
-
 
 done_testing;
 1;
