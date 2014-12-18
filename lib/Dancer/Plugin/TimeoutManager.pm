@@ -1,9 +1,7 @@
 package Dancer::Plugin::TimeoutManager;
 
-use 5.012002;
 use strict;
 use warnings;
-# VERSION
 
 use Dancer ':syntax';
 use Dancer::Exception ':all';
@@ -73,7 +71,7 @@ sub timeout {
         if ($@ && $@ =~ /Route Timeout Detected/){
             my $response_with_timeout = Dancer::Response->new(
                     status => 408,
-                    content => "Request Timeout : more than $timeout seconds"
+                    content => "Request Timeout : more than $timeout seconds elapsed."
                     );
             return $response_with_timeout;
         }
@@ -104,38 +102,38 @@ register_plugin;
 
 1;
 __END__
-# Below is stub documentation for your module. You'd better edit it!
-
 =head1 NAME
 
-Dancer::Plugin::TimeoutManager - Dancer plugin to set a timeout to a Dancer request
+Dancer::Plugin::TimeoutManager - Plugin to define route handlers with a timeout
 
 =head1 SYNOPSIS
   package MyDancerApp;
 
-  use strict;
-  use warnings;
-
+  use Dancer;
   use Dancer::Plugin::TimeoutManager;
   
-  timeout 1, 'get' => '/method' => sub{
-    my $code;
+  # if somecode() takes more than 1 second, execustion flow will be stoped and a 408 returned
+  timeout 1, 'get' => '/method' => sub {
+      somecode();
   };
 
-  #if header X-Dancer-Timeout is set, the header's value is used as timeout
-  timeout 'get' => '/method' => sub{
+  #if header X-Dancer-Timeout is set, the header's value is used as the timeout
+  timeout 'get' => '/method' => sub {
     my $code;
   };
 
  
-
 =head1 DESCRIPTION
 
-The goal of this plugin is to manage a timeout to Dancer. 
-If the timeout is set to 0, the behavior is the same than without timeout
-If a timeout is set, when this one is outdated a response with status 408 is sent
-If timeout is not set, you can also use X-Dancer-Timeout header to set a value to the timeout
+This plugins allows to define route handlers with a maximum amount of time for the code execution.
 
+If that time is elapsed and the code of the route still runs, the execution flow is stopped and a 
+default 408 response is returned.
+
+If the timeout is set to 0, the behavior is the same than without any timeout defined.
+
+It's also possible to define route handlers that will set a per-request timeout protection, depending 
+on the value of the header C<X-Dancer-Timeout>.
 
 =head1 AUTHOR
 
@@ -143,7 +141,7 @@ Frederic Lechauve, E<lt>frederic_lechauve at yahoo.frE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2014 by Frederic Lechauve
+Copyright (C) 2014 by Weborama
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.12.2 or,
