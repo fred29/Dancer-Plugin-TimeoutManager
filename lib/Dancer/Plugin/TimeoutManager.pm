@@ -72,17 +72,19 @@ sub timeout {
         my $response;
 
         #if timeout is not defined but a value is set in the headers for timeout
-        $timeout = vars->{header_timeout} if (!defined $timeout && defined vars->{header_timeout});
+        my $request_timeout = 0;
+        $request_timeout = $timeout if (defined $timeout);
+        $request_timeout = vars->{header_timeout} if (!defined $timeout && defined vars->{header_timeout});
 
         # if timeout is not defined or equal 0 the timeout manager is not used
         my $timeout_exception;
-        if (!$timeout){
+        if (!$request_timeout){
             $response = $code->();
         }
         else{
            try {
                 local $SIG{ALRM} = sub { croak ($exception_message); };
-                alarm($timeout);
+                alarm($request_timeout);
 
                 $response = $code->();
                 alarm(0);
@@ -96,7 +98,7 @@ sub timeout {
         if ($timeout_exception && $timeout_exception =~ /$exception_message/){
             my $response_with_timeout = Dancer::Response->new(
                     status => 408,
-                    content => "Request Timeout : more than $timeout seconds elapsed."
+                    content => "Request Timeout : more than $request_timeout seconds elapsed."
                     );
             return $response_with_timeout;
         }
