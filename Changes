@@ -1,4 +1,9 @@
 Revision history for Perl extension Dancer::Plugin::TimeoutManager.
+0.09 Mon Jan 12 11:15:00 2015
+        - improve code management of variable $timeout
+
+0.08 Tue Jan 8 14:35:00 2015
+        - use try tiny instead of eval in code
 
 0.07 Thu Jan 5 12:35:00 2015
         - Update Changes
