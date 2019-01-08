@@ -1,5 +1,5 @@
 Revision history for Perl extension Dancer::Plugin::TimeoutManager.
-0.10 Fri Dec 7 15:59:00 2018
+    
     - add max_timeout config variable and DISABLE_DANCER_TIMEOUT environment variable
 
 0.09 Mon Jan 12 11:15:00 2015
