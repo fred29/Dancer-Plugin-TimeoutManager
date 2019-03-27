@@ -1,4 +1,8 @@
 Revision history for Perl extension Dancer::Plugin::TimeoutManager.
+0.11 Wed Mar 27 16:27:00 2019 
+    - add callback for timeout
+    - Added github repo meta
+
 0.10 Tue Jan 08 12:21:00 2019 
     - add max_timeout config variable and DISABLE_DANCER_TIMEOUT environment variable
 
