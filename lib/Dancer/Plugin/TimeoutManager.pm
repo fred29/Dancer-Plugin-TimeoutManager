@@ -31,8 +31,8 @@ register_exception ('InvalidMethod',
     message_pattern => "method must be one in get, put, post, delete and %s is used as a method",
 );
 
-
 my @authorized_methods = ('get', 'post', 'put', 'delete');
+
 
 =method exception_message
 
@@ -42,7 +42,6 @@ This method can be used to catch the exception if the code used already containe
 =cut
 
 sub exception_message {
-
     return 'Route Timeout Detected';
 }
 
@@ -53,16 +52,16 @@ Method that manage the timeout on a dancer request
 =cut
 
 sub timeout {
-    my ($timeout,$method, $pattern, @rest);
+    my ($timeout, $method, $pattern, @rest);
 
     if (scalar(@_) == 4) {
-        ($timeout,$method, $pattern, @rest) = @_;
+        ($timeout, $method, $pattern, @rest) = @_;
     }
     elsif(scalar(@_) == 3) {
         ($method, $pattern, @rest) = @_;
     }
     else {
-         raise InvalidMethod => scalar(@_);
+         raise InvalidArgumentNumber => scalar(@_);
     }
 
     my $code;
@@ -111,6 +110,7 @@ sub timeout {
 
         # Timeout detected
         if ($timeout_exception && $timeout_exception =~ /$exception_message/) {
+            timeout_cb($timeout_exception);
             my $response_with_timeout = Dancer::Response->new(
                 status  => 408,
                 content => "Request Timeout : more than $request_timeout seconds elapsed."
@@ -139,6 +139,23 @@ sub timeout {
     # declare the route in Dancer's registry
     any [$method] => $pattern, @compiled_rest;
 }
+
+sub timeout_cb {}
+
+sub register_callback {
+    my ($cb) = @_;
+    return unless ref $cb eq 'CODE';
+
+    my $package = __PACKAGE__;
+    {
+        no strict 'refs';
+        no warnings 'redefine';
+        *{"${package}::timeout_cb"} = $cb;
+    }
+
+    return 1;
+}
+
 
 register_plugin;
 

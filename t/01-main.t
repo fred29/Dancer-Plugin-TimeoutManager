@@ -2,12 +2,13 @@ package main;
 use strict;
 use warnings;
 
-use Test::More;
-use Dancer::Test;
+use Test::More import => ['!pass'];
 
 {
     use Dancer;
     use Dancer::Plugin::TimeoutManager;
+    use Dancer::Test;
+
     setting show_errors => 1;
 
     timeout 2, 'get' => '/success' => sub {
@@ -45,7 +46,6 @@ use Dancer::Test;
         return "ok";
     }
 }
-
 
 response_status_is [GET => '/success'], 200,
   "GET /success works (no timeout triggered)";
@@ -148,7 +148,37 @@ response_content_is [GET => '/timeoutnotsetandnoheader'], 'ok', "content looks g
     is $@, "method must be one in get, put, post, delete and putt is used as a method", "Exception is correctly detected on method";
 }
 
+{
+    use Dancer;
+    use Dancer::Plugin::TimeoutManager;
+    use Dancer::Test;
+
+    is(Dancer::Plugin::TimeoutManager::register_callback(42), undef, 'Won\'t register non-coderef');
+    is(Dancer::Plugin::TimeoutManager::register_callback(\&callback), 1, 'Callback registered');
+
+    my $flag = 0;
+
+    set disable_timeout => 0;
+    set show_errors => 1;
+
+    set plugins => {
+        TimeoutManager => {
+            max_timeout => 3,
+        },
+    };
+
+    response_status_is [GET => '/timeouttoolong', {headers => ['X-Dancer-Timeout' => '4']}], 408,
+      "GET /timeouttoolong works (timeout triggered) max_timeout in action";
+    response_content_like [GET => '/timeouttoolong', {headers => ['X-Dancer-Timeout' => '4']}],
+      qr{Request Timeout.*3 seconds},
+      "content looks good for /timeouttoolong";
+
+    is($flag, 1, 'Callback on timeout called');
+
+    sub callback { $flag = 1; }
+}
 
 
 done_testing;
+
 1;
